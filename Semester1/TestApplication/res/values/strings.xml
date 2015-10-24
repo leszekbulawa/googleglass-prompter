@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">GoogleGlass</string>
+   
+    <string name="option_menu_1">Rozmiar czcionki</string>
+    <string name="option_menu_2">Liczba wyrazów</string>   
+    <string name="glass_startApp_trigger">Start Test</string>
+    
+    <string name="text_size_sub_menu_1">14</string>
+    <string name="text_size_sub_menu_2">16</string>
+    <string name="text_size_sub_menu_3">18</string>
+    <string name="text_size_sub_menu_4">20</string>
+    <string name="text_size_sub_menu_5">22</string>
+    
+    <string name="word_count_sub_menu_1">5 – 10 wyrazów</string>
+    <string name="word_count_sub_menu_2">10 – 20 wyrazów</string>
+    <string name="word_count_sub_menu_3">20 – 30 wyrazów</string>
+    <string name="word_count_sub_menu_4">30 – 40 wyrazów</string>
+    <string name="word_count_sub_menu_5">40 – 50 wyrazów</string>
+        
+    <string name="sentence_1">Lorem ipsum dolor sit amet, consectetur adipiscing.</string>
+    <string name="sentence_2">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus porta mauris quis tristique faucibus. Vestibulum malesuada urna enim.</string>
+    <string name="sentence_3">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris facilisis auctor ex ut posuere. Phasellus blandit lorem purus, eget volutpat mauris mollis vel. Duis ac.</string>
+    <string name="sentence_4">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur nec quam fermentum odio pretium dignissim. In quis massa nec lectus luctus rhoncus non vitae mauris. Curabitur vehicula neque eu ex aliquet scelerisque. Cras nisi magna.</string>
+    <string name="sentence_5">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu aliquam lacus, non vestibulum risus. Nullam interdum neque et hendrerit imperdiet. In mollis odio a ex tempor ullamcorper. Morbi ut diam ac magna egestas auctor. Phasellus eu mauris quis sem feugiat fermentum vitae eget lectus.</string>
+</resources>

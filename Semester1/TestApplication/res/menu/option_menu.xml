@@ -1,0 +1,50 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.googleglass.MainActivity" >
+    <item
+        android:id="@+id/option_1"
+        android:title="@string/option_menu_1">
+        <menu>	
+         	<item
+            	android:id="@+id/textsize_option_1"
+             	android:title="@string/text_size_sub_menu_1"/>
+         	<item
+            	android:id="@+id/textsize_option_2"
+             	android:title="@string/text_size_sub_menu_2"/>
+         	<item
+            	android:id="@+id/textsize_option_3"
+             	android:title="@string/text_size_sub_menu_3"/>
+         	<item
+            	android:id="@+id/textsize_option_4"
+             	android:title="@string/text_size_sub_menu_4"/>
+         	<item
+            	android:id="@+id/textsize_option_5"
+             	android:title="@string/text_size_sub_menu_5"/>
+		</menu>		
+	</item>
+	
+	<item
+        android:id="@+id/option_2"
+        android:title="@string/option_menu_2">
+        <menu>	
+         	<item
+            	android:id="@+id/wordsNumber_option_1"
+             	android:title="@string/word_count_sub_menu_1"/>
+         	<item
+            	android:id="@+id/wordsNumber_option_2"
+             	android:title="@string/word_count_sub_menu_2"/>
+         	<item
+            	android:id="@+id/wordsNumber_option_3"
+             	android:title="@string/word_count_sub_menu_3"/>
+         	<item
+            	android:id="@+id/wordsNumber_option_4"
+             	android:title="@string/word_count_sub_menu_4"/>
+         	<item
+            	android:id="@+id/wordsNumber_option_5"
+             	android:title="@string/word_count_sub_menu_5"/>
+		</menu>		
+	</item>
+	
+    
+
+</menu>
