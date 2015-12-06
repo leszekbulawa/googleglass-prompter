@@ -42,3 +42,6 @@ proguard/
 
 # Android Studio captures folder
 captures/
+
+#log files
+.log
