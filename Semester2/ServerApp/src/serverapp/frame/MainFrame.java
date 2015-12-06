@@ -6,10 +6,9 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -35,6 +34,7 @@ public class MainFrame extends JFrame implements ActionListener {
 	private JButton btnMinimizeServer;
 	private JButton btnExit;
 	private JButton btnOpenLogFile;
+	private JButton btnClearLogFile;
 	
 	private JLabel  lblCurrentStatus;
 	private JLabel  lblCurrentCompName;
@@ -50,20 +50,19 @@ public class MainFrame extends JFrame implements ActionListener {
 	private static final String BTN_STOP = "Stop";
 	private static final String BTN_MINIMIZE = "Minimize";
 	private static final String BTN_EXIT = "Exit";
-	private static final String BTN_WIFI = "Wifi";
-	private static final String BTN_BT = "Bluetooth";
 	private static final String BTN_LOG = "Open log file";
+	private static final String BTN_CLEAR_LOG = "Clear log";
 	private static final String LBL_STATUS = "Status:";
 	private static final String LBL_COMPUTER_NAME = "Computer Name:";
 	private static final String LBL_IP_ADDRESS = "IP Address:";
 	private static final String LBL_CONNECTION_TYPE = "Connection Type:";
+	private static final String LBL_WIFI = "Wifi";
 	
 	private static final Logger log = Logger.getLogger(MainFrame.class.getName());
-	
+	private HideFrame hideFrame;
 
 	public MainFrame() {
 		initFrame();
-
 	}
 
 	private void initFrame() {
@@ -73,7 +72,7 @@ public class MainFrame extends JFrame implements ActionListener {
 		setBounds(100, 100, 420, 300);
 		setLocationRelativeTo(null);
 		setResizable(false);
-		
+
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -116,18 +115,10 @@ public class MainFrame extends JFrame implements ActionListener {
 		btnOpenLogFile.addActionListener(this);
 		mainPanel.add(btnOpenLogFile);
 		
-		JRadioButton rdbtnWifi = new JRadioButton(BTN_WIFI);
-		rdbtnWifi.setBounds(115, 82, 50, 23);
-		mainPanel.add(rdbtnWifi);
-		
-		JRadioButton rdbtnBluetooth = new JRadioButton(BTN_BT);
-		rdbtnBluetooth.setBounds(167, 82, 81, 23);
-		mainPanel.add(rdbtnBluetooth);
-		
-		ButtonGroup radioBtnGroup = new ButtonGroup();
-		radioBtnGroup.add(rdbtnWifi);
-		radioBtnGroup.add(rdbtnBluetooth);	
-		
+		btnClearLogFile = new JButton(BTN_CLEAR_LOG);
+		btnClearLogFile.setBounds(119, 166, 99, 23);
+		btnClearLogFile.addActionListener(this);
+		mainPanel.add(btnClearLogFile);	
 	}
 	
 	private void createLabels(){
@@ -147,6 +138,10 @@ public class MainFrame extends JFrame implements ActionListener {
 		lblConnectionType.setBounds(10, 86, 99, 14);
 		mainPanel.add(lblConnectionType);
 		
+		JLabel lblWifi = new JLabel(LBL_WIFI);
+		lblWifi.setBounds(119, 86, 129, 14);
+		mainPanel.add(lblWifi);
+		
 		lblCurrentStatus = new JLabel();
 		lblCurrentStatus.setBounds(119, 11, 129, 14);
 		mainPanel.add(lblCurrentStatus);
@@ -163,9 +158,12 @@ public class MainFrame extends JFrame implements ActionListener {
 	private void initStartSettings() {	
 		lblCurrentStatus.setText(STATUS_STOPPED);
 		btnStopServer.setEnabled(false);	
-		
+
 		if(!SystemTray.isSupported()){
 			btnMinimizeServer.setEnabled(false);
+			log.info("System tray is not supported!");
+		} else {
+			log.info("System tray supported!");
 		}
 		setIpAndHostName();
 	}
@@ -183,6 +181,8 @@ public class MainFrame extends JFrame implements ActionListener {
 				exitServer();
 			} else if (btnClicked == btnOpenLogFile) {
 				openLog();
+			} else if (btnClicked == btnClearLogFile) {
+				clearLog();
 			}
 	}
 
@@ -201,9 +201,8 @@ public class MainFrame extends JFrame implements ActionListener {
 	}
 	
 	private void minimizeFrame() {
-		if(!SystemTray.isSupported()){
-			btnMinimizeServer.setEnabled(false);
-		}
+		hideFrame = new HideFrame(this);
+		this.setVisible(false);
 	}
 	
 	private void exitServer(){
@@ -215,9 +214,17 @@ public class MainFrame extends JFrame implements ActionListener {
 		try {
 			pb.start();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Open log error: "+e.getMessage());
 		}
+	}
+	
+	private void clearLog(){
+		try {
+			FileOutputStream writer = new FileOutputStream("log/log.out");
+			writer.close();
+		} catch (IOException e) {
+			log.error("Could not find log file: " + e.getMessage());
+		}	
 	}
 	
 	private void setIpAndHostName() {
@@ -227,5 +234,4 @@ public class MainFrame extends JFrame implements ActionListener {
 		lblCurrentIP.setText(localHost.getHostIPString());
 		log.info("Host IP: "+lblCurrentIP.getText());
 	}
-	
 }

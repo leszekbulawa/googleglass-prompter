@@ -52,7 +52,7 @@ public class DiscoveryThread implements Runnable {
 				
 			}
 		} catch (Exception e) {
-			log.info("Server error: " + e.getLocalizedMessage());
+			log.error("Server error: " + e.getMessage());
 		}
 		
 	}
