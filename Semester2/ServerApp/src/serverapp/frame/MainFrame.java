@@ -6,6 +6,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -19,7 +20,10 @@ import javax.swing.JRadioButton;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 
-import serverapp.host.LocalHost;
+import org.apache.log4j.Logger;
+
+import serverapp.server.DiscoveryThread;
+import serverapp.server.LocalHost;
 
 public class MainFrame extends JFrame implements ActionListener {
 
@@ -54,6 +58,8 @@ public class MainFrame extends JFrame implements ActionListener {
 	private static final String LBL_IP_ADDRESS = "IP Address:";
 	private static final String LBL_CONNECTION_TYPE = "Connection Type:";
 	
+	private static final Logger log = Logger.getLogger(MainFrame.class.getName());
+	
 
 	public MainFrame() {
 		initFrame();
@@ -81,6 +87,7 @@ public class MainFrame extends JFrame implements ActionListener {
 		
 		createButtons();	
 		createLabels();
+		initStartSettings();
 	}
 
 	private void createButtons(){
@@ -104,6 +111,11 @@ public class MainFrame extends JFrame implements ActionListener {
 		btnExit.addActionListener(this);
 		contentPane.add(btnExit);
 		
+		btnOpenLogFile = new JButton(BTN_LOG);
+		btnOpenLogFile.setBounds(10, 166, 99, 23);
+		btnOpenLogFile.addActionListener(this);
+		mainPanel.add(btnOpenLogFile);
+		
 		JRadioButton rdbtnWifi = new JRadioButton(BTN_WIFI);
 		rdbtnWifi.setBounds(115, 82, 50, 23);
 		mainPanel.add(rdbtnWifi);
@@ -116,9 +128,6 @@ public class MainFrame extends JFrame implements ActionListener {
 		radioBtnGroup.add(rdbtnWifi);
 		radioBtnGroup.add(rdbtnBluetooth);	
 		
-		btnOpenLogFile = new JButton(BTN_LOG);
-		btnOpenLogFile.setBounds(10, 166, 99, 23);
-		mainPanel.add(btnOpenLogFile);
 	}
 	
 	private void createLabels(){
@@ -173,12 +182,14 @@ public class MainFrame extends JFrame implements ActionListener {
 			} else if (btnClicked == btnExit) {
 				exitServer();
 			} else if (btnClicked == btnOpenLogFile) {
-				exitServer();
+				openLog();
 			}
 	}
 
 	private void startServer() {
 		lblCurrentStatus.setText(STATUS_RUNNING);
+		Thread discThread = new Thread(DiscoveryThread.getInstance());
+		discThread.start();
 		btnStopServer.setEnabled(true);
 		btnStartServer.setEnabled(false);
 	}
@@ -199,10 +210,22 @@ public class MainFrame extends JFrame implements ActionListener {
 		this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	}
 	
+	private void openLog(){
+		ProcessBuilder pb = new ProcessBuilder("Notepad.exe", "log/log.out");
+		try {
+			pb.start();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	private void setIpAndHostName() {
-		LocalHost localHost = new LocalHost();
+		LocalHost localHost = LocalHost.getInstance();
 		lblCurrentCompName.setText(localHost.getHostName());
-		lblCurrentIP.setText(localHost.getHostIP());
+		log.info("Host name: "+lblCurrentCompName.getText());
+		lblCurrentIP.setText(localHost.getHostIPString());
+		log.info("Host IP: "+lblCurrentIP.getText());
 	}
 	
 }
