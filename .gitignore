@@ -36,6 +36,7 @@ proguard/
 
 # Log Files
 *.log
+*.out
 
 # Android Studio Navigation editor temp files
 .navigation/
@@ -43,5 +44,3 @@ proguard/
 # Android Studio captures folder
 captures/
 
-#log files
-.log
