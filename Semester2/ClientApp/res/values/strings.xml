@@ -1,0 +1,11 @@
+<resources>
+
+    <string name="app_name">ClientApp</string>
+    <string name="say_clientapp">Client App</string>
+    <string name="stop">STOP</string>
+    <string name="footer">Google Glass Prompter</string>
+    
+    <string name="info">Hello</string>
+    <string name="socketclient">FIND SERVER</string>
+</resources>
+  
