@@ -1,0 +1,1 @@
+Library jacob-1.18-x64.dll has to be copied from ServerApp/lib to local jreinstallpath/bin.
