@@ -35,6 +35,7 @@ public class MainFrame extends JFrame implements ActionListener {
 	private JButton btnExit;
 	private JButton btnOpenLogFile;
 	private JButton btnClearLogFile;
+	private JButton btnManual;
 	
 	private JLabel  lblCurrentStatus;
 	private JLabel  lblCurrentCompName;
@@ -52,6 +53,7 @@ public class MainFrame extends JFrame implements ActionListener {
 	private static final String BTN_EXIT = "Exit";
 	private static final String BTN_LOG = "Open log file";
 	private static final String BTN_CLEAR_LOG = "Clear log";
+	private static final String BTN_MANUAL = "Manual"; //change
 	private static final String LBL_STATUS = "Status:";
 	private static final String LBL_COMPUTER_NAME = "Computer Name:";
 	private static final String LBL_IP_ADDRESS = "IP Address:";
@@ -60,6 +62,7 @@ public class MainFrame extends JFrame implements ActionListener {
 	
 	private static final Logger log = Logger.getLogger(MainFrame.class.getName());
 	private HideFrame hideFrame;
+	private ManualFrame manualFrame;
 
 	public MainFrame() {
 		initFrame();
@@ -119,6 +122,11 @@ public class MainFrame extends JFrame implements ActionListener {
 		btnClearLogFile.setBounds(119, 166, 99, 23);
 		btnClearLogFile.addActionListener(this);
 		mainPanel.add(btnClearLogFile);	
+		
+		btnManual = new JButton(BTN_MANUAL);
+		btnManual.setBounds(228, 166, 99, 23);
+		btnManual.addActionListener(this);
+		mainPanel.add(btnManual);	
 	}
 	
 	private void createLabels(){
@@ -183,6 +191,8 @@ public class MainFrame extends JFrame implements ActionListener {
 				openLog();
 			} else if (btnClicked == btnClearLogFile) {
 				clearLog();
+			} else if (btnClicked == btnManual){
+				manual();
 			}
 	}
 
@@ -225,6 +235,12 @@ public class MainFrame extends JFrame implements ActionListener {
 		} catch (IOException e) {
 			log.error("Could not find log file: " + e.getMessage());
 		}	
+	}
+	
+	private void manual(){
+		//Automation auto = new Automation();
+		manualFrame = new ManualFrame();
+		manualFrame.setVisible(true);
 	}
 	
 	private void setIpAndHostName() {
