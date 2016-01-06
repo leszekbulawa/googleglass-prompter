@@ -56,7 +56,7 @@ public class MainFrame extends JFrame implements ActionListener {
 	private static final String BTN_STOP = "Stop";
 	private static final String BTN_MINIMIZE = "Minimize";
 	private static final String BTN_EXIT = "Exit";
-	private static final String BTN_LOG = "Open log file";
+	private static final String BTN_LOG = "Open log";
 	private static final String BTN_CLEAR_LOG = "Clear log";
 	private static final String BTN_MANUAL = "Manual"; //change
 	private static final String BTN_OPEN = "Open presentation";
@@ -72,8 +72,12 @@ public class MainFrame extends JFrame implements ActionListener {
 	private Extractor extractor;
 	private File file;
 	private Desktop desktop;
-
+	
+	DiscoveryThread discThread;
+	private String[] notes;
+	
 	public MainFrame() {
+		discThread = new DiscoveryThread(this);
 		initFrame();
 	}
 
@@ -140,6 +144,7 @@ public class MainFrame extends JFrame implements ActionListener {
 		btnOpenPresentation = new JButton(BTN_OPEN);
 		btnOpenPresentation.setBounds(10, 130, 210, 23);
 		btnOpenPresentation.addActionListener(this);
+		btnOpenPresentation.setEnabled(false);
 		mainPanel.add(btnOpenPresentation);
 	}
 	
@@ -217,14 +222,15 @@ public class MainFrame extends JFrame implements ActionListener {
 
 	private void startServer() {
 		lblCurrentStatus.setText(STATUS_RUNNING);
-		Thread discThread = new Thread(DiscoveryThread.getInstance());
-		discThread.start();
+		Thread thread = new Thread(discThread);
+		thread.start();
 		btnStopServer.setEnabled(true);
 		btnStartServer.setEnabled(false);
 	}
 	
 	private void stopServer() {
 		lblCurrentStatus.setText(STATUS_STOPPED);
+		discThread.stopListening();
 		btnStopServer.setEnabled(false);
 		btnStartServer.setEnabled(true);
 	}
@@ -235,6 +241,7 @@ public class MainFrame extends JFrame implements ActionListener {
 	}
 	
 	private void exitServer(){
+		discThread.stopListening();
 		this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	}
 	
@@ -279,6 +286,9 @@ public class MainFrame extends JFrame implements ActionListener {
 			System.out.println(path);
 			extractor.openPresentation(path);
 			
+			extractor.getSlides();
+			notes = extractor.getNotes();
+			discThread.sendText(notes);
 			desktop = Desktop.getDesktop();
 			file = new File(input);
 			try {
@@ -297,4 +307,11 @@ public class MainFrame extends JFrame implements ActionListener {
 		lblCurrentIP.setText(localHost.getHostIPString());
 		log.info("Host IP: "+lblCurrentIP.getText());
 	}
+
+	public void changeLabel(String str) {
+		lblCurrentStatus.setText(str);	
+		if(str.equalsIgnoreCase("Connected"))
+			btnOpenPresentation.setEnabled(true);
+	}
 }
+
