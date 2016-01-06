@@ -1,29 +1,86 @@
 package kainos.clientapp;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
+import java.net.Socket;
 import java.util.Enumeration;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.format.Formatter;
 import android.widget.TextView;
 
 
 
 public class SocketClientActivity extends Activity implements Runnable{
+	
+	private final static int SERVER_IP_RECEIVED = 0;
+	private final static int START_TCP_CONN = 1;
+	private final static int ERROR = 2;
+	
 	private TextView mTvInfo;
 	String received;
 	DatagramSocket c;
+	String serverIP;
+	Socket myClient;
+	InputStream socketIn;
+	OutputStream socketOut;
+	
+	ObjectInputStream inStream;
+	ObjectOutputStream outStream;
+	
+	int port = 8888;
+	
+	private final Handler myHandler = new Handler() {
+	    public void handleMessage(Message msg) {
+	        final int what = msg.what;
+	        switch(what) {
+	        case SERVER_IP_RECEIVED: doUpdate(msg); break;
+	        case START_TCP_CONN: startTcpConnection(); break;
+	        case ERROR: mTvInfo.setText("ERROR");
+	        }
+	    }
+	};
 
+	private void doUpdate(Message msg) {
+	    mTvInfo.setText("Discovered server " + serverIP + ". Setting TCP connection...");
+	    myHandler.sendEmptyMessage(START_TCP_CONN);
+	}
 
+	private void startTcpConnection() {
+		Thread tcpConnection = new Thread(){
+			@Override
+			public void run() {
+				super.run();
+				try {
+			           myClient = new Socket(serverIP, port);
+			           socketIn = new DataInputStream(myClient.getInputStream());
+			           socketOut = new DataOutputStream(myClient.getOutputStream());
+			    }
+			    catch (IOException e) {
+			        System.out.println(e);
+			    }
+			}
+		};
+		tcpConnection.start();
+		
+	}
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -43,9 +100,6 @@ public class SocketClientActivity extends Activity implements Runnable{
 
 	public void run()
 	{
-		String serverIP = "192.168.56.1"; // my Mac on 28
-
-		int port = 8888;
 		// Find the server using UDP broadcast
 		try {
 		  //Open a random port to send the package
@@ -60,6 +114,7 @@ public class SocketClientActivity extends Activity implements Runnable{
 		    c.send(sendPacket);
 		    System.out.println(getClass().getName() + ">>> Request packet sent to: 255.255.255.255 (DEFAULT)");
 		  } catch (Exception e) {
+			  
 		  }
 
 		  // Broadcast the message over all the network interfaces
@@ -94,9 +149,9 @@ public class SocketClientActivity extends Activity implements Runnable{
 		  //Wait for a response
 		  byte[] recvBuf = new byte[15000];
 		  DatagramPacket receivePacket = new DatagramPacket(recvBuf, recvBuf.length);
-		  mTvInfo.setText("Packet Sent. Waiting fo response.");
 		  c.receive(receivePacket);
-
+		  //Close the port!
+		  c.close();
 		  //We have a response
 		  System.out.println(getClass().getName() + ">>> Broadcast response from server: " + receivePacket.getAddress().getHostAddress());
 
@@ -104,18 +159,13 @@ public class SocketClientActivity extends Activity implements Runnable{
 		  String message = new String(receivePacket.getData()).trim();
 		  if (message.equals("DISCOVER_RESPONSE")) {
 		    //DO SOMETHING WITH THE SERVER'S IP (for example, store it in your controller)
-			  mTvInfo.setText("message:" + message);
+			  serverIP = receivePacket.getAddress().getHostAddress();
+			  myHandler.sendEmptyMessage(SERVER_IP_RECEIVED);
 		  }
 
-		  //Close the port!
-		  c.close();
+		  
 		} catch (IOException ex) {
-			final IOException e = ex;
-			runOnUiThread(new Runnable() {
-				public void run() {
-					mTvInfo.setText(e.getMessage());
-				}
-			});	
+			myHandler.sendEmptyMessage(ERROR);
 		}
 		
 	}
