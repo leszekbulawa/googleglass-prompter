@@ -6,7 +6,9 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
+import java.awt.Desktop;
 import java.io.File;
+import java.io.IOException;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -31,6 +33,9 @@ public class ManualFrame extends JFrame implements ActionListener {
 	private JLabel  lblCurrentNote;
 	
 	private JPanel mainPanel;
+	
+	private File file;
+	private Desktop desktop;
 	
 	private static final String WINDOW_NAME = "MyPrompter Manual";
 	private static final String IMAGE_PATH = "res/ic_launcher.png";
@@ -156,6 +161,8 @@ public class ManualFrame extends JFrame implements ActionListener {
 		String input = null;
 		int ret;
 		
+		
+		
 		JFileChooser chooser = new JFileChooser();
 		chooser.setCurrentDirectory(new java.io.File(""));
 		chooser.setDialogTitle("Select pptx presentation file");
@@ -165,11 +172,20 @@ public class ManualFrame extends JFrame implements ActionListener {
 
 		if(ret == JFileChooser.APPROVE_OPTION){
 			input = chooser.getSelectedFile().getPath();
+			
 			//System.out.println(chooser.getSelectedFile().getPath());
 			path = input.replaceAll("\\\\", "\\\\\\\\");
 			//System.out.println(path);		
 			ex.openPresentation(path);
 			lblCurrentState.setText(STATE_RUNNING);
+			
+			desktop = Desktop.getDesktop();
+			file = new File(input);
+			try {
+				desktop.open(file);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
