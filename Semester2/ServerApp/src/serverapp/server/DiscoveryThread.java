@@ -16,6 +16,8 @@ import java.net.Socket;
 
 import org.apache.log4j.Logger;
 
+import serverapp.frame.MainFrame;
+
 /**
  * @author Tom
  *
@@ -40,7 +42,13 @@ public class DiscoveryThread implements Runnable {
 	
 	ObjectInputStream inStream;
 	ObjectOutputStream outStream;
+	
+	MainFrame mainFrame;
 
+	public DiscoveryThread(MainFrame mf) {
+		mainFrame = mf;
+	}
+	
 	@Override
 	public void run() {
 		broadcast = true;
@@ -82,13 +90,14 @@ public class DiscoveryThread implements Runnable {
 					broadcast = false;
 					
 					log.info("Server connected to client");
+					mainFrame.changeLabel("Connected");
 					
 					socketIn = clientSocket.getInputStream();
 					socketOut = clientSocket.getOutputStream();
 				
 					inStream = new ObjectInputStream(socketIn);
 					outStream = new ObjectOutputStream(socketOut);
-					
+
 					//key emulation for presentation movement
 					Robot robot = new Robot();
 					
@@ -141,15 +150,16 @@ public class DiscoveryThread implements Runnable {
 		if(outStream != null && connected){
 			try {
 				outStream.writeObject(str);
+				outStream.flush();
 			} catch (IOException e) {
 				log.info(e.getMessage());
 			}
 		}
 	}
 	
-	public static DiscoveryThread getInstance(){
-		return DiscoveryThreadHolder.INSTANCE;
-	}
+//	public static DiscoveryThread getInstance(){
+//		return DiscoveryThreadHolder.INSTANCE;
+//	}
 	
 	public void stopListening() {
 		if(broadcastSocket != null){
@@ -176,8 +186,8 @@ public class DiscoveryThread implements Runnable {
 		broadcast = false;
 	}
 	
-	private static class DiscoveryThreadHolder{
-		private static final DiscoveryThread INSTANCE = new DiscoveryThread();
-	}
+//	private static class DiscoveryThreadHolder{
+//		private static final DiscoveryThread INSTANCE = new DiscoveryThread();
+//	}
 
 }
