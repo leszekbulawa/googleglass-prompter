@@ -13,6 +13,8 @@ import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xslf.usermodel.XSLFTextParagraph;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
 
+import org.apache.log4j.Logger;
+
 public class Extractor{
 
 	private FileInputStream inputPresentationFile;
@@ -22,22 +24,24 @@ public class Extractor{
 	private XMLSlideShow slideshow;
 	private XSLFSlide [] slidesArray;
 	private XSLFNotes notes;
-	private XSLFNotes notestest;
 	public XSLFPowerPointExtractor extractor;
 	public String [] notesArray;
+	public String [] notesArrayEmpty;
 	public String stringBuff;
 	public String noteTemp;
 	
 	int slideNumber;
 	
+	private static final Logger log = Logger.getLogger(Extractor.class.getName());
+	
 	public void openPresentation(String path){
 		try{
 			inputPresentationFile = new FileInputStream(path);
 			slideshow = new XMLSlideShow(inputPresentationFile);
-			System.out.println("Success!");
-		}catch (Exception e){
-			System.out.println("Could not open presentation.");
-			System.out.println(e);
+			log.info("Opening successful.");
+		}catch (IOException e){
+			log.info("Could not open presentation.");
+			log.info(e.getMessage());
 		}	
 	}
 	
@@ -48,12 +52,12 @@ public class Extractor{
 			slidesArray = slideList.toArray(new XSLFSlide[slideList.size()]);
 			notesArray = new String[slidesArray.length];
 		}else{
-			System.out.println("Select and open presentation.");
+			log.info("Presentation not opened");
 		}
 		return slideNumber;
 	}
 	
-	public void getNotes(){
+	public String[] getNotes(){
 		if (slideNumber != 0){
 			for (int i=0; i<slidesArray.length; i++){	
 				try{
@@ -80,21 +84,22 @@ public class Extractor{
 						notesArray[i] = "Note empty";
 					}
 					else{
+						log.info(e.getMessage());
 						System.out.println(e);
 					}
 				}
 			}
-			for (int i=0; i<notesArray.length; i++){
-				System.out.println(notesArray[i]);
-			}
+			return notesArray;
 		}else{
-			System.out.println("There are no slides.");
+			notesArrayEmpty[0] = "There are no slides";
+			log.info("There are no slides");
+			return notesArrayEmpty;
 		}
 		
 	}
-	public void getNotes2(){
+	public String getNotes2(){
 		extractor = new XSLFPowerPointExtractor(slideshow);
 		String notes2 = extractor.getText(true, true);
-		System.out.println(notes2);
+		return notes2;
 	}
 }

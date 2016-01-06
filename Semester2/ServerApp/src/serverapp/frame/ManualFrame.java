@@ -19,6 +19,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 
+import org.apache.log4j.Logger;
+
 public class ManualFrame extends JFrame implements ActionListener {
 	
 	private JPanel  contentPane;
@@ -50,7 +52,9 @@ public class ManualFrame extends JFrame implements ActionListener {
 	private static final String STATE_RUNNING = "Loaded";
 	private static final String STATE_NOTRUNNING = "Not loaded";
 
-	Extractor ex;
+	private Extractor ex;
+	
+	private static final Logger log = Logger.getLogger(ManualFrame.class.getName());
 	
 	public ManualFrame(){
 		initFrame();
@@ -172,10 +176,7 @@ public class ManualFrame extends JFrame implements ActionListener {
 
 		if(ret == JFileChooser.APPROVE_OPTION){
 			input = chooser.getSelectedFile().getPath();
-			
-			//System.out.println(chooser.getSelectedFile().getPath());
-			path = input.replaceAll("\\\\", "\\\\\\\\");
-			//System.out.println(path);		
+			path = input.replaceAll("\\\\", "\\\\\\\\");	
 			ex.openPresentation(path);
 			lblCurrentState.setText(STATE_RUNNING);
 			
@@ -190,14 +191,11 @@ public class ManualFrame extends JFrame implements ActionListener {
 	}
 	
 	private void slide(){
-		//System.out.println("Previous slide not implemented yet");
 		ex.getSlides();
 		lblCurrentSlideNumber.setText(""+ex.getSlides());
 	}
 	
 	private void note(){
-		//System.out.println("Next slide not implemented yet");
 		ex.getNotes();
-		//ex.getNotes2();
 	}
 }
