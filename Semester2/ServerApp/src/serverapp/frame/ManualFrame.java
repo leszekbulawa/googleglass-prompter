@@ -168,19 +168,20 @@ public class ManualFrame extends JFrame implements ActionListener {
 			//System.out.println(chooser.getSelectedFile().getPath());
 			path = input.replaceAll("\\\\", "\\\\\\\\");
 			//System.out.println(path);		
-			ex.OpenPresentation(path);
+			ex.openPresentation(path);
 			lblCurrentState.setText(STATE_RUNNING);
 		}
 	}
 	
 	private void slide(){
 		//System.out.println("Previous slide not implemented yet");
-		ex.GetSlides();
-		lblCurrentSlideNumber.setText(""+ex.GetSlides());
+		ex.getSlides();
+		lblCurrentSlideNumber.setText(""+ex.getSlides());
 	}
 	
 	private void note(){
 		//System.out.println("Next slide not implemented yet");
-		ex.GetNotes();
+		ex.getNotes();
+		//ex.getNotes2();
 	}
 }
