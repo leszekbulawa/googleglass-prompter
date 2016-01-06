@@ -5,6 +5,10 @@ import java.awt.event.KeyEvent;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
@@ -31,8 +35,11 @@ public class DiscoveryThread implements Runnable {
 	ServerSocket serverSocket;
 	int port = 8888;
 	
-	DataInputStream inStream;
-	DataOutputStream outStream;
+	InputStream socketIn;
+	OutputStream socketOut;
+	
+	ObjectInputStream inStream;
+	ObjectOutputStream outStream;
 
 	@Override
 	public void run() {
@@ -76,8 +83,11 @@ public class DiscoveryThread implements Runnable {
 					
 					log.info("Server connected to client");
 					
-					inStream = new DataInputStream(clientSocket.getInputStream());
-					outStream = new DataOutputStream(clientSocket.getOutputStream());
+					socketIn = clientSocket.getInputStream();
+					socketOut = clientSocket.getOutputStream();
+				
+					inStream = new ObjectInputStream(socketIn);
+					outStream = new ObjectOutputStream(socketOut);
 					
 					//key emulation for presentation movement
 					Robot robot = new Robot();
@@ -127,10 +137,10 @@ public class DiscoveryThread implements Runnable {
 		
 	}
 	
-	public void sendText(String str){
+	public void sendText(String[] str){
 		if(outStream != null && connected){
 			try {
-				outStream.writeUTF(str);
+				outStream.writeObject(str);
 			} catch (IOException e) {
 				log.info(e.getMessage());
 			}
@@ -143,7 +153,6 @@ public class DiscoveryThread implements Runnable {
 	
 	public void stopListening() {
 		if(broadcastSocket != null){
-			System.out.println("Zamknieto socket: BroadcastSocket ");
 			broadcastSocket.close();
 		}
 		
