@@ -8,5 +8,10 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/ServerApp/lib/log4j-1.2.17-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="lib/poi-3.13-20150929.jar"/>
+	<classpathentry kind="lib" path="lib/poi-ooxml-3.13-20150929.jar"/>
+	<classpathentry kind="lib" path="lib/poi-ooxml-schemas-3.13-20150929.jar"/>
+	<classpathentry kind="lib" path="lib/xmlbeans-2.6.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
