@@ -20,6 +20,7 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 
 import org.apache.log4j.Logger;
+import javax.swing.SwingConstants;
 
 public class ManualFrame extends JFrame implements ActionListener {
 	
@@ -29,6 +30,8 @@ public class ManualFrame extends JFrame implements ActionListener {
 	private JButton btnNotes;
 	private JButton btnSlides;
 	private JButton btnOpen;
+	private JButton btnPrevious;
+	private JButton btnNext;
 	
 	private JLabel  lblCurrentState;
 	private JLabel  lblCurrentSlideNumber;
@@ -55,6 +58,13 @@ public class ManualFrame extends JFrame implements ActionListener {
 	private Extractor ex;
 	
 	private static final Logger log = Logger.getLogger(ManualFrame.class.getName());
+	
+	private int slideNumber;
+	private int slideAmount;
+	private String [] notes;
+	private String html1;
+	private String html2;
+
 	
 	public ManualFrame(){
 		initFrame();
@@ -107,6 +117,16 @@ public class ManualFrame extends JFrame implements ActionListener {
 		btnClose.addActionListener(this);
 		contentPane.add(btnClose);
 		
+		btnPrevious = new JButton("<");
+		btnPrevious.setBounds(200, 32, 50, 20);
+		btnPrevious.addActionListener(this);
+		mainPanel.add(btnPrevious);
+		
+		btnNext = new JButton(">");
+		btnNext.setBounds(260, 32, 50, 20);
+		btnNext.addActionListener(this);
+		mainPanel.add(btnNext);
+		
 	}
 	
 	private void createLabels(){
@@ -127,18 +147,20 @@ public class ManualFrame extends JFrame implements ActionListener {
 		mainPanel.add(lblCurrentState);
 		
 		lblCurrentSlideNumber = new JLabel();
-		lblCurrentSlideNumber.setBounds(119, 36, 129, 14);
+		lblCurrentSlideNumber.setBounds(119, 36, 65, 14);
 		mainPanel.add(lblCurrentSlideNumber);
 		
 		lblCurrentNote = new JLabel();
-		lblCurrentNote.setBounds(119, 61, 129, 14);
+		lblCurrentNote.setVerticalAlignment(SwingConstants.TOP);
+		lblCurrentNote.setBounds(119, 61, 260, 128);
 		mainPanel.add(lblCurrentNote);
-		
+				
 	}
 	
 	private void initStartSettings() {
 		ex = new Extractor();
 		lblCurrentState.setText(STATE_NOTRUNNING);
+		lblCurrentNote.setText("Empty");
 	}
 	
 	@Override
@@ -152,11 +174,16 @@ public class ManualFrame extends JFrame implements ActionListener {
 				slide();
 			} else if (btnClicked == btnClose){
 				close();
+			} else if (btnClicked == btnPrevious){
+				previous();
+			} else if (btnClicked == btnNext){
+				next();
 			}
 	}
 	
 	private void close(){
-		this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+		//this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+		this.setVisible(false);
 	}
 		
 	private void open(){
@@ -176,7 +203,9 @@ public class ManualFrame extends JFrame implements ActionListener {
 
 		if(ret == JFileChooser.APPROVE_OPTION){
 			input = chooser.getSelectedFile().getPath();
-			path = input.replaceAll("\\\\", "\\\\\\\\");	
+			System.out.println(input);
+			path = input.replaceAll("\\\\", "\\\\\\\\");
+			System.out.println(path);
 			ex.openPresentation(path);
 			lblCurrentState.setText(STATE_RUNNING);
 			
@@ -192,10 +221,36 @@ public class ManualFrame extends JFrame implements ActionListener {
 	
 	private void slide(){
 		ex.getSlides();
-		lblCurrentSlideNumber.setText(""+ex.getSlides());
+		slideNumber = 0;
+		slideAmount = ex.getSlides();
+		lblCurrentSlideNumber.setText(""+ slideNumber + "/"+ slideAmount);
+		html1 = "<html><body style='width: 200 px'>";
+		html2 = "px'>";
 	}
 	
 	private void note(){
-		ex.getNotes();
+		slideNumber = 1;
+		if(slideAmount!=0){
+			ex.getNotes();
+			notes = ex.getNotes();
+			lblCurrentSlideNumber.setText(""+ slideNumber + "/"+ slideAmount);
+			lblCurrentNote.setText(notes[slideNumber-1]);
+		}
+	}
+	
+	private void previous(){
+		if (slideNumber>1){
+			slideNumber = slideNumber - 1;
+		}
+		lblCurrentSlideNumber.setText(""+ slideNumber + "/"+ slideAmount);
+		lblCurrentNote.setText(html1 + notes[slideNumber-1] + "</html>");
+	}
+	
+	private void next(){
+		if (slideNumber<slideAmount){
+			slideNumber = slideNumber + 1;
+		}
+		lblCurrentSlideNumber.setText(""+ slideNumber + "/"+ slideAmount);
+		lblCurrentNote.setText(html1+ notes[slideNumber-1] + "</html>");
 	}
 }

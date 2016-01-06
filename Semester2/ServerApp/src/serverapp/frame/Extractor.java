@@ -68,12 +68,12 @@ public class Extractor{
 							XSLFTextShape txShape = (XSLFTextShape) shape;
 							
 							for (XSLFTextParagraph xslfParagraph : txShape.getTextParagraphs()){
-								tempstr.append(xslfParagraph.getText());
+								tempstr.append(xslfParagraph.getText() + "\n");
 								stringBuff = xslfParagraph.getText();								
 							}
 						}
 					}										
-					tempstr.setLength(tempstr.length()-stringBuff.length());				
+					tempstr.setLength(tempstr.length()-(stringBuff.length()+1));				
 					if(notesArray[i]==null){
 						notesArray[i] = "Note empty";
 					}				

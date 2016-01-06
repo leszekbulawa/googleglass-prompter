@@ -1,23 +1,27 @@
 package serverapp.frame;
 
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.apache.log4j.Logger;
 
@@ -36,6 +40,7 @@ public class MainFrame extends JFrame implements ActionListener {
 	private JButton btnOpenLogFile;
 	private JButton btnClearLogFile;
 	private JButton btnManual;
+	private JButton btnOpenPresentation;
 	
 	private JLabel  lblCurrentStatus;
 	private JLabel  lblCurrentCompName;
@@ -54,6 +59,7 @@ public class MainFrame extends JFrame implements ActionListener {
 	private static final String BTN_LOG = "Open log file";
 	private static final String BTN_CLEAR_LOG = "Clear log";
 	private static final String BTN_MANUAL = "Manual"; //change
+	private static final String BTN_OPEN = "Open presentation";
 	private static final String LBL_STATUS = "Status:";
 	private static final String LBL_COMPUTER_NAME = "Computer Name:";
 	private static final String LBL_IP_ADDRESS = "IP Address:";
@@ -63,6 +69,9 @@ public class MainFrame extends JFrame implements ActionListener {
 	private static final Logger log = Logger.getLogger(MainFrame.class.getName());
 	private HideFrame hideFrame;
 	private ManualFrame manualFrame;
+	private Extractor extractor;
+	private File file;
+	private Desktop desktop;
 
 	public MainFrame() {
 		initFrame();
@@ -114,19 +123,24 @@ public class MainFrame extends JFrame implements ActionListener {
 		contentPane.add(btnExit);
 		
 		btnOpenLogFile = new JButton(BTN_LOG);
-		btnOpenLogFile.setBounds(10, 166, 99, 23);
+		btnOpenLogFile.setBounds(10, 166, 100, 23);
 		btnOpenLogFile.addActionListener(this);
 		mainPanel.add(btnOpenLogFile);
 		
 		btnClearLogFile = new JButton(BTN_CLEAR_LOG);
-		btnClearLogFile.setBounds(119, 166, 99, 23);
+		btnClearLogFile.setBounds(120, 166, 100, 23);
 		btnClearLogFile.addActionListener(this);
 		mainPanel.add(btnClearLogFile);	
 		
 		btnManual = new JButton(BTN_MANUAL);
-		btnManual.setBounds(228, 166, 99, 23);
+		btnManual.setBounds(230, 166, 100, 23);
 		btnManual.addActionListener(this);
-		mainPanel.add(btnManual);	
+		mainPanel.add(btnManual);
+		
+		btnOpenPresentation = new JButton(BTN_OPEN);
+		btnOpenPresentation.setBounds(10, 130, 210, 23);
+		btnOpenPresentation.addActionListener(this);
+		mainPanel.add(btnOpenPresentation);
 	}
 	
 	private void createLabels(){
@@ -161,11 +175,14 @@ public class MainFrame extends JFrame implements ActionListener {
 		lblCurrentIP = new JLabel();
 		lblCurrentIP.setBounds(119, 61, 129, 14);
 		mainPanel.add(lblCurrentIP);
+		
 	}
 
 	private void initStartSettings() {	
 		lblCurrentStatus.setText(STATUS_STOPPED);
 		btnStopServer.setEnabled(false);	
+		extractor = new Extractor();
+		manualFrame = new ManualFrame();
 
 		if(!SystemTray.isSupported()){
 			btnMinimizeServer.setEnabled(false);
@@ -193,6 +210,8 @@ public class MainFrame extends JFrame implements ActionListener {
 				clearLog();
 			} else if (btnClicked == btnManual){
 				manual();
+			} else if (btnClicked == btnOpenPresentation){
+				openPresentation();
 			}
 	}
 
@@ -238,9 +257,37 @@ public class MainFrame extends JFrame implements ActionListener {
 	}
 	
 	private void manual(){
-		//Automation auto = new Automation();
-		manualFrame = new ManualFrame();
 		manualFrame.setVisible(true);
+	}
+	
+	private void openPresentation(){
+		String path = null;
+		String input = null;
+		int ret;
+
+		JFileChooser chooser = new JFileChooser();
+		chooser.setCurrentDirectory(new java.io.File(""));
+		chooser.setDialogTitle("Select pptx presentation file");
+		chooser.setFileFilter(new FileNameExtensionFilter("PPTX", "pptx"));
+		
+		ret = chooser.showOpenDialog(getParent());
+
+		if(ret == JFileChooser.APPROVE_OPTION){
+			input = chooser.getSelectedFile().getPath();
+			System.out.println(input);
+			path = input.replaceAll("\\\\", "\\\\\\\\");
+			System.out.println(path);
+			extractor.openPresentation(path);
+			
+			desktop = Desktop.getDesktop();
+			file = new File(input);
+			try {
+				desktop.open(file);
+			} catch (IOException e) {
+				e.printStackTrace();
+				log.info(e.getMessage());
+			}
+		}
 	}
 	
 	private void setIpAndHostName() {
