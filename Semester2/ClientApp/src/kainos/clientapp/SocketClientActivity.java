@@ -1,15 +1,12 @@
 package kainos.clientapp;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -18,11 +15,15 @@ import java.net.NetworkInterface;
 import java.net.Socket;
 import java.util.Enumeration;
 
+import com.google.android.glass.touchpad.Gesture;
+import com.google.android.glass.touchpad.GestureDetector;
+
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.text.format.Formatter;
+import android.view.MotionEvent;
 import android.widget.TextView;
 
 
@@ -32,6 +33,11 @@ public class SocketClientActivity extends Activity implements Runnable{
 	private final static int SERVER_IP_RECEIVED = 0;
 	private final static int START_TCP_CONN = 1;
 	private final static int ERROR = 2;
+	private final static int DOWNLOAD_NOTES = 3;
+	private final static String START = "start";
+	private final static String NEXT = "next";
+	private final static String PREVIOUS = "previous";
+	private final static String EXIT = "exit";
 	
 	private TextView mTvInfo;
 	String received;
@@ -44,43 +50,49 @@ public class SocketClientActivity extends Activity implements Runnable{
 	ObjectInputStream inStream;
 	ObjectOutputStream outStream;
 	
+	private GestureDetector mGestureDetector;
+	
 	int port = 8888;
 	
 	private final Handler myHandler = new Handler() {
 	    public void handleMessage(Message msg) {
 	        final int what = msg.what;
 	        switch(what) {
-	        case SERVER_IP_RECEIVED: doUpdate(msg); break;
-	        case START_TCP_CONN: startTcpConnection(); break;
-	        case ERROR: mTvInfo.setText("ERROR");
+	        case SERVER_IP_RECEIVED: 
+	        	mTvInfo.setText("Discovered server " + serverIP);
+	        	myHandler.sendEmptyMessage(START_TCP_CONN);
+	        	break;
+	        case START_TCP_CONN: 
+	        	mTvInfo.setText("Start TCP connection...");
+	        	tcpConnection.start();
+	        	break;
+	        case DOWNLOAD_NOTES: 
+	        	mTvInfo.setText("Press TAP to start the presentation");
+	        	break;
 	        }
 	    }
 	};
-
-	private void doUpdate(Message msg) {
-	    mTvInfo.setText("Discovered server " + serverIP + ". Setting TCP connection...");
-	    myHandler.sendEmptyMessage(START_TCP_CONN);
-	}
-
-	private void startTcpConnection() {
-		Thread tcpConnection = new Thread(){
-			@Override
-			public void run() {
-				super.run();
-				try {
-			           myClient = new Socket(serverIP, port);
-			           socketIn = new DataInputStream(myClient.getInputStream());
-			           socketOut = new DataOutputStream(myClient.getOutputStream());
-			    }
-			    catch (IOException e) {
-			        System.out.println(e);
-			    }
-			}
-		};
-		tcpConnection.start();
-		
-	}
 	
+	Thread tcpConnection = new Thread(){
+		@Override
+		public void run() {
+			super.run();
+			try {
+		           myClient = new Socket(serverIP, port);
+		           socketIn = new DataInputStream(myClient.getInputStream());
+		           socketOut = new DataOutputStream(myClient.getOutputStream());
+		        		           
+		           //inStream = new ObjectInputStream(socketIn);
+				   outStream = new ObjectOutputStream(socketOut);
+				   System.out.println("UDA£O SIÊ!");
+				   myHandler.sendEmptyMessage(DOWNLOAD_NOTES);
+		    }
+		    catch (IOException e) {
+		        System.out.println(e);
+		    }
+		}
+	};
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -89,7 +101,41 @@ public class SocketClientActivity extends Activity implements Runnable{
 		mTvInfo.setText("Connecting to server ...");
 		Thread thread = new Thread(this);
 		thread.start();		
+		mGestureDetector = new GestureDetector(this);
+
+		mGestureDetector.setBaseListener(new GestureDetector.BaseListener() {
+		@Override
+		public boolean onGesture(Gesture gesture) {
+			if (gesture == Gesture.TAP) {
+				System.out.println("TAP!!!");
+				new ControlTask().execute(START);
+				return true;
+			} else if (gesture == Gesture.SWIPE_RIGHT) {
+				System.out.println("SWIPE_RIGHT");
+				new ControlTask().execute(NEXT);
+				return true;
+			} else if (gesture == Gesture.SWIPE_LEFT) {
+				System.out.println("SWIPE_LEFT");
+				new ControlTask().execute(PREVIOUS);
+				return true;
+			} else if (gesture == Gesture.SWIPE_DOWN) {
+				System.out.println("SWIPE_DOWN");
+				new ControlTask().execute(EXIT);
+				return true;
+			}
+			return false;
+		}
+		});
 	}
+
+	// Send generic motion events to the gesture detector
+	@Override
+	public boolean onGenericMotionEvent(MotionEvent event) {
+		if (mGestureDetector != null) {
+			return mGestureDetector.onMotionEvent(event);
+		}
+		return false;
+	}        
 
 	@Override
 	protected void onStop() {
@@ -165,7 +211,21 @@ public class SocketClientActivity extends Activity implements Runnable{
 
 		  
 		} catch (IOException ex) {
-			myHandler.sendEmptyMessage(ERROR);
+		}
+	}
+
+	class ControlTask extends AsyncTask<String, Void, Void> {
+
+		@Override
+		protected Void doInBackground(String... control) {
+			try {
+				outStream.writeUTF(control[0]);
+				outStream.flush();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return null;
 		}
 		
 	}
