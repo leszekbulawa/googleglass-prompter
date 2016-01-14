@@ -24,16 +24,19 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.MotionEvent;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 
 
-public class SocketClientActivity extends Activity implements Runnable{
+public class SocketClientActivity extends Activity {
 	
-	private final static int SERVER_IP_RECEIVED = 0;
-	private final static int START_TCP_CONN = 1;
-	private final static int ERROR = 2;
-	private final static int DOWNLOAD_NOTES = 3;
+	public final static int START_SERVER_DISCOVERY = 0;
+	public final static int SERVER_IP_RECEIVED = 1;
+	public final static int START_TCP_CONN = 2;
+	public final static int OPEN_PRESENTATION = 3;
+	public final static int START_PRESENTATION = 4;
+	public final static int PRINT_NOTES = 5;
 	private final static String START = "start";
 	private final static String NEXT = "next";
 	private final static String PREVIOUS = "previous";
@@ -41,14 +44,17 @@ public class SocketClientActivity extends Activity implements Runnable{
 	
 	private TextView mTvInfo;
 	String received;
-	DatagramSocket c;
+	DatagramSocket datagramSocket;
 	String serverIP;
-	Socket myClient;
-	InputStream socketIn;
-	OutputStream socketOut;
+	String message;
+	DiscoveryThread discoveryThread;
+	TCPConnectionThread tcpConnection;
+	String[] notes;
+	int indx = 0;
+	boolean getnotes = true;
 	
-	ObjectInputStream inStream;
 	ObjectOutputStream outStream;
+	ObjectInputStream inStream;
 	
 	private GestureDetector mGestureDetector;
 	
@@ -58,68 +64,63 @@ public class SocketClientActivity extends Activity implements Runnable{
 	    public void handleMessage(Message msg) {
 	        final int what = msg.what;
 	        switch(what) {
-	        case SERVER_IP_RECEIVED: 
+	        case START_SERVER_DISCOVERY:
+	        	mTvInfo.setText("Starting server discovery...");
+	        	discoveryThread = new DiscoveryThread(myHandler, port);
+	        	new Thread(discoveryThread).start();
+	        	break;
+	        case SERVER_IP_RECEIVED:
+	        	serverIP = discoveryThread.getServerIP();
 	        	mTvInfo.setText("Discovered server " + serverIP);
 	        	myHandler.sendEmptyMessage(START_TCP_CONN);
 	        	break;
 	        case START_TCP_CONN: 
-	        	mTvInfo.setText("Start TCP connection...");
-	        	tcpConnection.start();
+	        	mTvInfo.setText("Starting TCP connection...");
+	        	tcpConnection = new TCPConnectionThread(myHandler, serverIP, port);
+	        	new Thread(tcpConnection).start();
 	        	break;
-	        case DOWNLOAD_NOTES: 
+	        case OPEN_PRESENTATION:
+	        	outStream = tcpConnection.getOutStream();
+	        	mTvInfo.setText("Open presentation on the server and TAP to start it");
+	        	break;
+	        case START_PRESENTATION:
 	        	mTvInfo.setText("Press TAP to start the presentation");
 	        	break;
+	        case PRINT_NOTES:
+	        	mTvInfo.setText(notes[indx]);
 	        }
 	    }
 	};
 	
-	Thread tcpConnection = new Thread(){
-		@Override
-		public void run() {
-			super.run();
-			try {
-		           myClient = new Socket(serverIP, port);
-		           socketIn = new DataInputStream(myClient.getInputStream());
-		           socketOut = new DataOutputStream(myClient.getOutputStream());
-		        		           
-		           //inStream = new ObjectInputStream(socketIn);
-				   outStream = new ObjectOutputStream(socketOut);
-				   System.out.println("UDA£O SIÊ!");
-				   myHandler.sendEmptyMessage(DOWNLOAD_NOTES);
-		    }
-		    catch (IOException e) {
-		        System.out.println(e);
-		    }
-		}
-	};
-
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_socket_client);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		
 		mTvInfo = (TextView) findViewById(R.id.info);
-		mTvInfo.setText("Connecting to server ...");
-		Thread thread = new Thread(this);
-		thread.start();		
+		myHandler.sendEmptyMessage(START_SERVER_DISCOVERY);
+		
 		mGestureDetector = new GestureDetector(this);
-
 		mGestureDetector.setBaseListener(new GestureDetector.BaseListener() {
-		@Override
-		public boolean onGesture(Gesture gesture) {
+			@Override
+			public boolean onGesture(Gesture gesture) {
 			if (gesture == Gesture.TAP) {
-				System.out.println("TAP!!!");
+				indx = 0;
 				new ControlTask().execute(START);
 				return true;
-			} else if (gesture == Gesture.SWIPE_RIGHT) {
-				System.out.println("SWIPE_RIGHT");
+			} else  if (gesture == Gesture.SWIPE_RIGHT) {
+				if (indx < notes.length - 1) indx++;
+				else new ControlTask().execute(EXIT);
 				new ControlTask().execute(NEXT);
 				return true;
 			} else if (gesture == Gesture.SWIPE_LEFT) {
-				System.out.println("SWIPE_LEFT");
+				if (indx > 0 ) indx--;
+				else new ControlTask().execute(EXIT);
 				new ControlTask().execute(PREVIOUS);
 				return true;
-			} else if (gesture == Gesture.SWIPE_DOWN) {
-				System.out.println("SWIPE_DOWN");
+			} else if (gesture == Gesture.TWO_TAP) {
+				indx = 0;
 				new ControlTask().execute(EXIT);
 				return true;
 			}
@@ -140,79 +141,9 @@ public class SocketClientActivity extends Activity implements Runnable{
 	@Override
 	protected void onStop() {
 		super.onStop();  
-		if (c != null) c.close();
+		if (datagramSocket != null) datagramSocket.close();
 	}
 
-
-	public void run()
-	{
-		// Find the server using UDP broadcast
-		try {
-		  //Open a random port to send the package
-		  c = new DatagramSocket();
-		  c.setBroadcast(true);
-
-		  byte[] sendData = "DISCOVER_REQUEST".getBytes();
-
-		  //Try the 255.255.255.255 first
-		  try {
-		    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("255.255.255.255"), port);
-		    c.send(sendPacket);
-		    System.out.println(getClass().getName() + ">>> Request packet sent to: 255.255.255.255 (DEFAULT)");
-		  } catch (Exception e) {
-			  
-		  }
-
-		  // Broadcast the message over all the network interfaces
-		  Enumeration interfaces = NetworkInterface.getNetworkInterfaces();
-		  while (interfaces.hasMoreElements()) {
-		    NetworkInterface networkInterface = (NetworkInterface) interfaces.nextElement();
-
-		    if (networkInterface.isLoopback() || !networkInterface.isUp()) {
-		      continue; // Don't want to broadcast to the loopback interface
-		    }
-
-		    for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
-		      InetAddress broadcast = interfaceAddress.getBroadcast();
-		      if (broadcast == null) {
-		        continue;
-		      }
-
-		      // Send the broadcast package!
-		      try {
-		        DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, broadcast, port);
-		        c.send(sendPacket);
-		        System.out.println(getClass().getName() + ">>> Request packet sent to: " + broadcast.getHostAddress() + "; Interface: " + networkInterface.getDisplayName());
-		      } catch (Exception e) {
-		      }
-
-		      System.out.println(getClass().getName() + ">>> Request packet sent to: " + broadcast.getHostAddress() + "; Interface: " + networkInterface.getDisplayName());
-		    }
-		  }
-
-		  System.out.println(getClass().getName() + ">>> Done looping over all network interfaces. Now waiting for a reply!");
-
-		  //Wait for a response
-		  byte[] recvBuf = new byte[15000];
-		  DatagramPacket receivePacket = new DatagramPacket(recvBuf, recvBuf.length);
-		  c.receive(receivePacket);
-		  //Close the port!
-		  c.close();
-		  //We have a response
-		  System.out.println(getClass().getName() + ">>> Broadcast response from server: " + receivePacket.getAddress().getHostAddress());
-
-		  //Check if the message is correct
-		  String message = new String(receivePacket.getData()).trim();
-		  if (message.equals("DISCOVER_RESPONSE")) {
-		    //DO SOMETHING WITH THE SERVER'S IP (for example, store it in your controller)
-			  serverIP = receivePacket.getAddress().getHostAddress();
-			  myHandler.sendEmptyMessage(SERVER_IP_RECEIVED);
-		  }
-
-		  
-		} catch (IOException ex) {
-		}
-	}
 
 	class ControlTask extends AsyncTask<String, Void, Void> {
 
@@ -221,10 +152,18 @@ public class SocketClientActivity extends Activity implements Runnable{
 			try {
 				outStream.writeUTF(control[0]);
 				outStream.flush();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				if(control[0] == START && getnotes) {
+					inStream = new ObjectInputStream(tcpConnection.getSocketIn());
+					if(inStream != null) {
+						notes = (String[]) inStream.readObject();
+						getnotes = false;
+					}
+				}
+				
+			} catch (IOException | ClassNotFoundException e) {
+				System.out.println(e.getMessage());
 			}
+			myHandler.sendEmptyMessage(PRINT_NOTES);
 			return null;
 		}
 		
