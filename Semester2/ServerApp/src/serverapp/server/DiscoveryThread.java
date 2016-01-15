@@ -44,10 +44,6 @@ public class DiscoveryThread implements Runnable {
 	ObjectOutputStream outStream;
 	
 	MainFrame mainFrame;
-
-	public DiscoveryThread(MainFrame mf) {
-		mainFrame = mf;
-	}
 	
 	@Override
 	public void run() {
@@ -125,6 +121,7 @@ public class DiscoveryThread implements Runnable {
 										}
 									} catch (IOException e) {
 										// TODO Auto-generated catch block
+										connected = false;
 										log.error(e.getMessage());
 									}				
 								}			
@@ -146,8 +143,12 @@ public class DiscoveryThread implements Runnable {
 		
 	}
 	
+	public void getFrame(MainFrame mf){
+		this.mainFrame = mf;
+	}
+	
 	public void sendText(String[] str){
-		if(outStream != null && connected){
+		if(isConnected()){
 			try {
 				outStream.writeObject(str);
 				outStream.flush();
@@ -157,9 +158,29 @@ public class DiscoveryThread implements Runnable {
 		}
 	}
 	
-//	public static DiscoveryThread getInstance(){
-//		return DiscoveryThreadHolder.INSTANCE;
-//	}
+	public void sendFont(boolean[] font){
+		if(isConnected()){
+			try {
+				System.out.println("Wysy³anie Fontów");
+				outStream.writeObject(font);
+				outStream.flush();
+			} catch (IOException e) {
+				log.info(e.getMessage());
+			}
+		}
+	}
+	
+	public boolean isConnected(){
+		if(outStream !=null && connected){
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public static DiscoveryThread getInstance(){
+		return DiscoveryThreadHolder.INSTANCE;
+	}
 	
 	public void stopListening() {
 		if(broadcastSocket != null){
@@ -186,8 +207,8 @@ public class DiscoveryThread implements Runnable {
 		broadcast = false;
 	}
 	
-//	private static class DiscoveryThreadHolder{
-//		private static final DiscoveryThread INSTANCE = new DiscoveryThread();
-//	}
+	private static class DiscoveryThreadHolder{
+		private static final DiscoveryThread INSTANCE = new DiscoveryThread();
+	}
 
 }

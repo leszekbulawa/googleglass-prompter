@@ -27,6 +27,7 @@ import org.apache.log4j.Logger;
 
 import serverapp.server.DiscoveryThread;
 import serverapp.server.LocalHost;
+import javax.swing.JCheckBox;
 
 public class MainFrame extends JFrame implements ActionListener {
 
@@ -39,12 +40,19 @@ public class MainFrame extends JFrame implements ActionListener {
 	private JButton btnExit;
 	private JButton btnOpenLogFile;
 	private JButton btnClearLogFile;
-	private JButton btnManual;
 	private JButton btnOpenPresentation;
+	private JButton btnManual;
+	private JButton btnResetTimer;
+	
+	private JRadioButton arial16RadioBtn;
+	private JRadioButton arial18RadioBtn;
+	private JRadioButton calibri18RadioBtn;
+	private JCheckBox timerEnabled;
 	
 	private JLabel  lblCurrentStatus;
 	private JLabel  lblCurrentCompName;
 	private JLabel  lblCurrentIP;
+	private ButtonGroup btnFontGroup;
 	
 	private JPanel mainPanel;
 	
@@ -75,9 +83,11 @@ public class MainFrame extends JFrame implements ActionListener {
 	
 	DiscoveryThread discThread;
 	private String[] notes;
+	private JPanel timerPanel;
 	
 	public MainFrame() {
-		discThread = new DiscoveryThread(this);
+		discThread = DiscoveryThread.getInstance();
+		discThread.getFrame(this);	
 		initFrame();
 	}
 
@@ -85,7 +95,7 @@ public class MainFrame extends JFrame implements ActionListener {
 		setTitle(APPLICATION_NAME);
 		setIconImage(Toolkit.getDefaultToolkit().getImage(IMAGE_PATH));
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 420, 300);
+		setBounds(100, 100, 413, 310);
 		setLocationRelativeTo(null);
 		setResizable(false);
 
@@ -96,9 +106,11 @@ public class MainFrame extends JFrame implements ActionListener {
 		
 		mainPanel = new JPanel();
 		mainPanel.setBorder(new EtchedBorder(EtchedBorder.LOWERED, Color.BLACK, Color.GRAY));
-		mainPanel.setBounds(10, 11, 384, 200);
+		mainPanel.setBounds(10, 11, 234, 231);
 		contentPane.add(mainPanel);
 		mainPanel.setLayout(null);
+		
+		btnFontGroup = new ButtonGroup();
 		
 		createButtons();	
 		createLabels();
@@ -107,45 +119,92 @@ public class MainFrame extends JFrame implements ActionListener {
 
 	private void createButtons(){
 		btnStartServer = new JButton(BTN_START);
-		btnStartServer.setBounds(10, 228, 89, 23);
+		btnStartServer.setBounds(10, 253, 89, 23);
 		btnStartServer.addActionListener(this);
 		contentPane.add(btnStartServer);
 		
 		btnStopServer = new JButton(BTN_STOP);
-		btnStopServer.setBounds(109, 228, 89, 23);
+		btnStopServer.setBounds(109, 253, 89, 23);
 		btnStopServer.addActionListener(this);
 		contentPane.add(btnStopServer);
 		
 		btnMinimizeServer = new JButton(BTN_MINIMIZE);
-		btnMinimizeServer.setBounds(208, 228, 89, 23);
+		btnMinimizeServer.setBounds(208, 253, 89, 23);
 		btnMinimizeServer.addActionListener(this);
 		contentPane.add(btnMinimizeServer);
 		
 		btnExit = new JButton(BTN_EXIT);
-		btnExit.setBounds(305, 228, 89, 23);
+		btnExit.setBounds(307, 253, 89, 23);
 		btnExit.addActionListener(this);
 		contentPane.add(btnExit);
 		
 		btnOpenLogFile = new JButton(BTN_LOG);
-		btnOpenLogFile.setBounds(10, 166, 100, 23);
+		btnOpenLogFile.setBounds(10, 163, 100, 23);
 		btnOpenLogFile.addActionListener(this);
 		mainPanel.add(btnOpenLogFile);
 		
 		btnClearLogFile = new JButton(BTN_CLEAR_LOG);
-		btnClearLogFile.setBounds(120, 166, 100, 23);
+		btnClearLogFile.setBounds(120, 163, 100, 23);
 		btnClearLogFile.addActionListener(this);
 		mainPanel.add(btnClearLogFile);	
 		
-		btnManual = new JButton(BTN_MANUAL);
-		btnManual.setBounds(230, 166, 100, 23);
-		btnManual.addActionListener(this);
-		mainPanel.add(btnManual);
-		
 		btnOpenPresentation = new JButton(BTN_OPEN);
-		btnOpenPresentation.setBounds(10, 130, 210, 23);
+		btnOpenPresentation.setBounds(10, 129, 210, 23);
 		btnOpenPresentation.addActionListener(this);
 		btnOpenPresentation.setEnabled(false);
 		mainPanel.add(btnOpenPresentation);
+		
+		JPanel panel = new JPanel();
+		panel.setBounds(254, 11, 125, 114);
+		contentPane.add(panel);
+		panel.setLayout(null);
+		panel.setBorder(new EtchedBorder(EtchedBorder.LOWERED, Color.BLACK, Color.GRAY));
+		
+		arial16RadioBtn = new JRadioButton("Arial 16");
+		arial16RadioBtn.setSelected(true);
+		arial16RadioBtn.setBounds(9, 32, 101, 23);
+		arial16RadioBtn.addActionListener(this);
+		btnFontGroup.add(arial16RadioBtn);
+		panel.add(arial16RadioBtn);
+		
+		arial18RadioBtn = new JRadioButton("Arial 18");
+		arial18RadioBtn.setBounds(9, 58, 101, 23);
+		arial18RadioBtn.addActionListener(this);
+		btnFontGroup.add(arial18RadioBtn);
+		panel.add(arial18RadioBtn);
+		
+		calibri18RadioBtn = new JRadioButton("Calibri 18");
+		calibri18RadioBtn.setBounds(9, 84, 101, 23);
+		calibri18RadioBtn.addActionListener(this);
+		btnFontGroup.add(calibri18RadioBtn);
+		panel.add(calibri18RadioBtn);
+		
+		JLabel setFontLbl = new JLabel();
+		setFontLbl.setText("Set Font:");
+		setFontLbl.setBounds(9, 11, 101, 14);
+		panel.add(setFontLbl);
+		
+		timerPanel = new JPanel();
+		timerPanel.setLayout(null);
+		timerPanel.setBorder(new EtchedBorder(EtchedBorder.LOWERED, Color.BLACK, Color.GRAY));
+		timerPanel.setBounds(254, 136, 125, 106);
+		contentPane.add(timerPanel);
+		
+		timerEnabled = new JCheckBox("Enabled");
+		timerEnabled.setBounds(10, 38, 97, 23);
+		timerPanel.add(timerEnabled);
+		timerEnabled.setSelected(true);
+		
+		btnResetTimer = new JButton("Reset");
+		btnResetTimer.setBounds(10, 72, 93, 23);
+		timerPanel.add(btnResetTimer);
+		
+		JLabel timerLbl = new JLabel();
+		timerLbl.setBounds(10, 11, 101, 14);
+		timerPanel.add(timerLbl);
+		timerLbl.setText("Timer:");
+		btnResetTimer.addActionListener(this);
+		timerEnabled.addActionListener(this);
 	}
 	
 	private void createLabels(){
@@ -170,7 +229,7 @@ public class MainFrame extends JFrame implements ActionListener {
 		mainPanel.add(lblWifi);
 		
 		lblCurrentStatus = new JLabel();
-		lblCurrentStatus.setBounds(119, 11, 129, 14);
+		lblCurrentStatus.setBounds(119, 11, 101, 14);
 		mainPanel.add(lblCurrentStatus);
 		
 		lblCurrentCompName = new JLabel();
@@ -181,6 +240,10 @@ public class MainFrame extends JFrame implements ActionListener {
 		lblCurrentIP.setBounds(119, 61, 129, 14);
 		mainPanel.add(lblCurrentIP);
 		
+		btnManual = new JButton("Manual");
+		btnManual.setBounds(10, 197, 210, 23);
+		mainPanel.add(btnManual);
+		btnManual.addActionListener(this);		
 	}
 
 	private void initStartSettings() {	
@@ -217,6 +280,15 @@ public class MainFrame extends JFrame implements ActionListener {
 				manual();
 			} else if (btnClicked == btnOpenPresentation){
 				openPresentation();
+			} else if (btnClicked == arial16RadioBtn){
+				if(discThread.isConnected())
+					discThread.sendFont(getCurrentFont());
+			} else if (btnClicked == arial18RadioBtn){
+				if(discThread.isConnected())
+					discThread.sendFont(getCurrentFont());
+			} else if (btnClicked == calibri18RadioBtn){
+				if(discThread.isConnected())
+					discThread.sendFont(getCurrentFont());
 			}
 	}
 
@@ -288,7 +360,11 @@ public class MainFrame extends JFrame implements ActionListener {
 			
 			extractor.getSlides();
 			notes = extractor.getNotes();
+			
+			discThread.sendFont(getCurrentFont());
+			
 			discThread.sendText(notes);
+			
 			desktop = Desktop.getDesktop();
 			file = new File(input);
 			try {
@@ -299,7 +375,15 @@ public class MainFrame extends JFrame implements ActionListener {
 			}
 		}
 	}
-	
+
+	/**
+	 * @return
+	 */
+	private boolean[] getCurrentFont() {
+		boolean font[] = {arial16RadioBtn.isSelected(), arial18RadioBtn.isSelected(), calibri18RadioBtn.isSelected()};
+		return font;
+	}
+
 	private void setIpAndHostName() {
 		LocalHost localHost = LocalHost.getInstance();
 		lblCurrentCompName.setText(localHost.getHostName());

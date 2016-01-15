@@ -49,7 +49,7 @@ public class TCPConnectionThread implements Runnable {
 
 
 	public TCPConnectionThread(Handler handler, String serverIP, int port) {
-	mHandler = handler;
+		mHandler = handler;
 		mServerIP = serverIP;
 		mPort = port;
 	}
