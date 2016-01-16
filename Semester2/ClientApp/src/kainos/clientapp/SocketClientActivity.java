@@ -30,15 +30,15 @@ public class SocketClientActivity extends Activity {
 	public final static int UDP_TIMEOUT = 1;
 	public final static int SERVER_IP_RECEIVED = 2;
 	public final static int START_TCP_CONN = 3;
-	public final static int OPEN_PRESENTATION = 4;
-	public final static int START_PRESENTATION = 5;
-	public final static int PRINT_NOTES = 6;
+	public final static int TCP_CONN_LOST = 4;
+	public final static int OPEN_PRESENTATION = 5;
+	public final static int START_PRESENTATION = 6;
+	public final static int PRINT_NOTES = 7;
 	private final static String START = "start";
 	private final static String NEXT = "next";
 	private final static String PREVIOUS = "previous";
 	private final static String EXIT = "exit";
 	private final static String CHANGE_FONT = "font";
-	private final static String CHANGE_CHRONO = "Chronometer";
 	
 	private TextView mTvInfo;
 	String received;
@@ -54,7 +54,7 @@ public class SocketClientActivity extends Activity {
 	ObjectOutputStream outStream;
 	ObjectInputStream inStream;
 	
-	private Thread listenToServer;
+	private ListeningThread listenToServer;
 	private boolean isListening;
 	private GetFonts getFonts;
 	boolean fontData[] = {true, false, false}; 
@@ -87,10 +87,14 @@ public class SocketClientActivity extends Activity {
 	        	tcpConnection = new TCPConnectionThread(myHandler, serverIP, port);
 	        	new Thread(tcpConnection).start();
 	        	break;
+	        case TCP_CONN_LOST: 
+	        	isListening = false;
+	        	mTvInfo.setText("Connection lost. Restart server and TAP to reconnect");
+	        	break;
 	        case OPEN_PRESENTATION:
 	        	outStream = tcpConnection.getOutStream();
 	        	isListening = true;
-	        	listenToServer.start();
+	        	new Thread(listenToServer).start();
 	        	mTvInfo.setText("Open presentation on the server and TAP to start it");
 	        	break;
 	        case START_PRESENTATION:
@@ -113,6 +117,8 @@ public class SocketClientActivity extends Activity {
 		setContentView(R.layout.activity_socket_client);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		
+		listenToServer  = new ListeningThread();
+		
 		getFonts = new GetFonts(getApplicationContext());
 		typeface = getFonts.getArial();	
 		
@@ -123,39 +129,17 @@ public class SocketClientActivity extends Activity {
 		discoveryThread = new DiscoveryThread(myHandler, port);
 		
 		chronometer = (Chronometer) findViewById(R.id.chronometer);
-		chronometer.setBase(SystemClock.elapsedRealtime() + (5*1000));	
+		chronometer.setBase(SystemClock.elapsedRealtime() + (3*1000));	
 		
 		myHandler.sendEmptyMessage(START_SERVER_DISCOVERY);
-		
-		listenToServer = new Thread() {
-			public void run() {
-				Object dataReceived;
-				try {
-					inStream = new ObjectInputStream(tcpConnection.getSocketIn());
-					while (isListening) {
-						dataReceived = inStream.readObject();
-						if (dataReceived instanceof boolean[]) {
-							fontData = (boolean[]) dataReceived;
-							changeFont(fontData);
-						} else if (dataReceived instanceof String[]) {
-							notes = (String[]) dataReceived;
-						} else if (dataReceived instanceof Boolean){
-							new ChronometerTask().execute((Boolean)dataReceived);
-						}
-					}
-				} catch (ClassNotFoundException | IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			};
-		};
 		
 		mGestureDetector = new GestureDetector(this);
 		mGestureDetector.setBaseListener(new GestureDetector.BaseListener() {
 			@Override
 			public boolean onGesture(Gesture gesture) {
 			if (gesture == Gesture.TAP) {
-				if(mTvInfo.getText().toString().contains("Timeout reached")){
+				String command = mTvInfo.getText().toString();
+				if(command.contains("Timeout reached") || command.contains("Connection lost")){
 					myHandler.sendEmptyMessage(START_SERVER_DISCOVERY);
 				} else {
 					indx = 0;
@@ -174,7 +158,7 @@ public class SocketClientActivity extends Activity {
 				else new ControlTask().execute(EXIT);
 				new ControlTask().execute(PREVIOUS);
 				return true;
-			} else if (gesture == Gesture.TWO_TAP) {
+			} else if (gesture == Gesture.LONG_PRESS) {
 				indx = 0;
 				new ControlTask().execute(EXIT);
 				return true;
@@ -262,12 +246,47 @@ public class SocketClientActivity extends Activity {
 			super.onPostExecute(result);
 			if(result){
 				chronometer.setVisibility(View.VISIBLE);
-				chronometer.setBase(SystemClock.elapsedRealtime() + (5*1000));
+				chronometer.setBase(SystemClock.elapsedRealtime() + (3*1000));
 				chronometer.start();
 			} else {
 				chronometer.stop();
 				chronometer.setVisibility(View.INVISIBLE);
 			}
 		}	
+	}
+	
+	private class ListeningThread implements Runnable {
+
+		@Override
+		public void run() {
+			Object dataReceived;
+			try {
+				inStream = new ObjectInputStream(tcpConnection.getSocketIn());
+				while (isListening) {
+					dataReceived = inStream.readObject();
+					if (dataReceived instanceof boolean[]) {
+						fontData = (boolean[]) dataReceived;
+						changeFont(fontData);
+					} else if (dataReceived instanceof String[]) {
+						notes = (String[]) dataReceived;
+					} else if (dataReceived instanceof Boolean){
+						new ChronometerTask().execute((Boolean)dataReceived);
+					}
+					System.out.println("CHODZI!!!!!!!!!!!!!!!!!!!!!!!");
+				}
+			} catch (IOException e) { //socket connection lost
+				isListening = false;
+				
+				myHandler.sendEmptyMessage(TCP_CONN_LOST);
+				
+//				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+			if(tcpConnection != null)
+				tcpConnection.closeSocket();
+		};
+
+	
 	}
 }

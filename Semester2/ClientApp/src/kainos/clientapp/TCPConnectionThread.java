@@ -25,6 +25,7 @@ public class TCPConnectionThread implements Runnable {
 
 	@Override
 	public void run() {
+		System.out.println("Zaczety!!!!");
 		try {
 			myClient = new Socket(mServerIP, mPort);
 			socketIn = myClient.getInputStream();
@@ -37,6 +38,7 @@ public class TCPConnectionThread implements Runnable {
 		catch (IOException e) {
 			System.out.println(e);
 		}
+		System.out.println("Skonczony!!!!");
 	};
 
 	public InputStream getSocketIn() {
@@ -69,5 +71,22 @@ public class TCPConnectionThread implements Runnable {
 
 	public void setOutStream(ObjectOutputStream outStream) {
 		this.outStream = outStream;
+	}
+	
+	public void closeSocket(){
+		try {
+//			inStream.cl
+			myClient.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		// TODO Auto-generated method stub
+		super.finalize();
+		myClient.close();
 	}
 }
