@@ -6,6 +6,8 @@ import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -27,6 +29,7 @@ import org.apache.log4j.Logger;
 
 import serverapp.server.DiscoveryThread;
 import serverapp.server.LocalHost;
+
 import javax.swing.JCheckBox;
 
 public class MainFrame extends JFrame implements ActionListener {
@@ -192,11 +195,23 @@ public class MainFrame extends JFrame implements ActionListener {
 		
 		timerEnabled = new JCheckBox("Enabled");
 		timerEnabled.setBounds(10, 38, 97, 23);
+		timerEnabled.addItemListener(new ItemListener() {
+			
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				if(discThread.isConnected()){
+					discThread.sendChrono(timerEnabled.isSelected());
+					btnResetTimer.setEnabled(timerEnabled.isSelected());
+				}
+				
+			}
+		});
 		timerPanel.add(timerEnabled);
 		timerEnabled.setSelected(true);
 		
 		btnResetTimer = new JButton("Reset");
 		btnResetTimer.setBounds(10, 72, 93, 23);
+		btnResetTimer.setEnabled(false);
 		timerPanel.add(btnResetTimer);
 		
 		JLabel timerLbl = new JLabel();
@@ -289,6 +304,10 @@ public class MainFrame extends JFrame implements ActionListener {
 			} else if (btnClicked == calibri18RadioBtn){
 				if(discThread.isConnected())
 					discThread.sendFont(getCurrentFont());
+			} else if (btnClicked == btnResetTimer){
+				if(discThread.isConnected())
+					discThread.sendChrono(false);
+					discThread.sendChrono(true);
 			}
 	}
 
@@ -300,9 +319,12 @@ public class MainFrame extends JFrame implements ActionListener {
 		btnStartServer.setEnabled(false);
 	}
 	
-	private void stopServer() {
+	public void stopServer() {
 		lblCurrentStatus.setText(STATUS_STOPPED);
 		discThread.stopListening();
+		
+		btnOpenPresentation.setEnabled(false);
+		btnResetTimer.setEnabled(false);
 		btnStopServer.setEnabled(false);
 		btnStartServer.setEnabled(true);
 	}
@@ -363,6 +385,9 @@ public class MainFrame extends JFrame implements ActionListener {
 			
 			discThread.sendFont(getCurrentFont());
 			
+			discThread.sendChrono(timerEnabled.isSelected());
+			btnResetTimer.setEnabled(timerEnabled.isSelected());
+			
 			discThread.sendText(notes);
 			
 			desktop = Desktop.getDesktop();
@@ -396,6 +421,8 @@ public class MainFrame extends JFrame implements ActionListener {
 		lblCurrentStatus.setText(str);	
 		if(str.equalsIgnoreCase("Connected"))
 			btnOpenPresentation.setEnabled(true);
+			
+			
 	}
 }
 

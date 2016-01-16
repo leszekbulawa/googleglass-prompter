@@ -124,7 +124,10 @@ public class DiscoveryThread implements Runnable {
 										connected = false;
 										log.error(e.getMessage());
 									}				
-								}			
+								}
+								if(!connected){
+									mainFrame.stopServer();
+								}
 							}
 						};
 						listen.start();
@@ -161,7 +164,21 @@ public class DiscoveryThread implements Runnable {
 	public void sendFont(boolean[] font){
 		if(isConnected()){
 			try {
-				System.out.println("Wysy³anie Fontów");
+				log.info("Font change send to glass");
+				outStream.writeObject(font);
+				outStream.flush();
+			} catch (IOException e) {
+				log.info(e.getMessage());
+			}
+		}
+	}
+	
+	public void sendChrono(Boolean font){
+		String message = "Chronometer is " + (font ? "enabled" : "disabled");
+		log.info(message);
+		if(isConnected()){
+			try {			
+				log.info(message);
 				outStream.writeObject(font);
 				outStream.flush();
 			} catch (IOException e) {

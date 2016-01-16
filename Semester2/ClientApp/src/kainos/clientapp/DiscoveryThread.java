@@ -6,6 +6,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
+import java.net.SocketTimeoutException;
 import java.util.Enumeration;
 
 import android.os.Handler;
@@ -72,9 +73,17 @@ public class DiscoveryThread implements Runnable {
 			  //Wait for a response
 			  byte[] recvBuf = new byte[15000];
 			  DatagramPacket receivePacket = new DatagramPacket(recvBuf, recvBuf.length);
+			  
+			  mDatagramSocket.setSoTimeout(5000);
+			 
 			  mDatagramSocket.receive(receivePacket);
+			
+			 
+			  
 			  //Close the port!
 			  mDatagramSocket.close();
+			  
+			  
 			  //We have a response
 			  System.out.println(getClass().getName() + ">>> Broadcast response from server: " + receivePacket.getAddress().getHostAddress());
 
@@ -85,6 +94,9 @@ public class DiscoveryThread implements Runnable {
 				  mHandler.sendEmptyMessage(SocketClientActivity.SERVER_IP_RECEIVED);
 			  }
 			  
+			} catch (SocketTimeoutException e) {
+				mDatagramSocket.close();
+				mHandler.sendEmptyMessage(SocketClientActivity.UDP_TIMEOUT);
 			} catch (IOException ex) {
 				
 			}

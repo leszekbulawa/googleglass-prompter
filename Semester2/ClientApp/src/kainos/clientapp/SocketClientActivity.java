@@ -1,23 +1,9 @@
 package kainos.clientapp;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OptionalDataException;
-import java.io.OutputStream;
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
-import java.net.Socket;
-import java.util.Enumeration;
-
-import com.google.android.glass.touchpad.Gesture;
-import com.google.android.glass.touchpad.GestureDetector;
 
 import android.app.Activity;
 import android.graphics.Typeface;
@@ -25,26 +11,34 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
+import android.transition.Visibility;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Chronometer;
 import android.widget.TextView;
+
+import com.google.android.glass.touchpad.Gesture;
+import com.google.android.glass.touchpad.GestureDetector;
 
 
 
 public class SocketClientActivity extends Activity {
 	
 	public final static int START_SERVER_DISCOVERY = 0;
-	public final static int SERVER_IP_RECEIVED = 1;
-	public final static int START_TCP_CONN = 2;
-	public final static int OPEN_PRESENTATION = 3;
-	public final static int START_PRESENTATION = 4;
-	public final static int PRINT_NOTES = 5;
+	public final static int UDP_TIMEOUT = 1;
+	public final static int SERVER_IP_RECEIVED = 2;
+	public final static int START_TCP_CONN = 3;
+	public final static int OPEN_PRESENTATION = 4;
+	public final static int START_PRESENTATION = 5;
+	public final static int PRINT_NOTES = 6;
 	private final static String START = "start";
 	private final static String NEXT = "next";
 	private final static String PREVIOUS = "previous";
 	private final static String EXIT = "exit";
 	private final static String CHANGE_FONT = "font";
+	private final static String CHANGE_CHRONO = "Chronometer";
 	
 	private TextView mTvInfo;
 	String received;
@@ -61,12 +55,14 @@ public class SocketClientActivity extends Activity {
 	ObjectInputStream inStream;
 	
 	private Thread listenToServer;
+	private boolean isListening;
 	private GetFonts getFonts;
 	boolean fontData[] = {true, false, false}; 
 	private Typeface typeface;
 	int textSize = 16;
 	
 	private GestureDetector mGestureDetector;
+	private Chronometer chronometer;
 	
 	int port = 8888;
 	
@@ -75,9 +71,11 @@ public class SocketClientActivity extends Activity {
 	        final int what = msg.what;
 	        switch(what) {
 	        case START_SERVER_DISCOVERY:
-	        	mTvInfo.setText("Starting server discovery...");
-	        	discoveryThread = new DiscoveryThread(myHandler, port);
+	        	mTvInfo.setText("Starting server discovery...");        	
 	        	new Thread(discoveryThread).start();
+	        	break;
+	        case UDP_TIMEOUT:
+	        	mTvInfo.setText("Timeout reached, TAP again to reconnect.");
 	        	break;
 	        case SERVER_IP_RECEIVED:
 	        	serverIP = discoveryThread.getServerIP();
@@ -91,6 +89,7 @@ public class SocketClientActivity extends Activity {
 	        	break;
 	        case OPEN_PRESENTATION:
 	        	outStream = tcpConnection.getOutStream();
+	        	isListening = true;
 	        	listenToServer.start();
 	        	mTvInfo.setText("Open presentation on the server and TAP to start it");
 	        	break;
@@ -98,7 +97,12 @@ public class SocketClientActivity extends Activity {
 	        	mTvInfo.setText("Press TAP to start the presentation");
 	        	break;
 	        case PRINT_NOTES:
-	        	mTvInfo.setText(notes[indx]);
+	        	if(notes != null){
+	        		mTvInfo.setText(notes[indx]);
+	        	} else {
+	        		mTvInfo.setText("Presentation not loaded.\nOpen presentation on the server and TAP to start it");
+	        		
+	        	}
 	        }
 	    }
 	};
@@ -116,6 +120,11 @@ public class SocketClientActivity extends Activity {
 		mTvInfo.setTypeface(typeface);
 		mTvInfo.setTextSize(textSize);
 		
+		discoveryThread = new DiscoveryThread(myHandler, port);
+		
+		chronometer = (Chronometer) findViewById(R.id.chronometer);
+		chronometer.setBase(SystemClock.elapsedRealtime() + (5*1000));	
+		
 		myHandler.sendEmptyMessage(START_SERVER_DISCOVERY);
 		
 		listenToServer = new Thread() {
@@ -123,13 +132,15 @@ public class SocketClientActivity extends Activity {
 				Object dataReceived;
 				try {
 					inStream = new ObjectInputStream(tcpConnection.getSocketIn());
-					while (true) {
+					while (isListening) {
 						dataReceived = inStream.readObject();
 						if (dataReceived instanceof boolean[]) {
 							fontData = (boolean[]) dataReceived;
 							changeFont(fontData);
 						} else if (dataReceived instanceof String[]) {
 							notes = (String[]) dataReceived;
+						} else if (dataReceived instanceof Boolean){
+							new ChronometerTask().execute((Boolean)dataReceived);
 						}
 					}
 				} catch (ClassNotFoundException | IOException e) {
@@ -144,9 +155,15 @@ public class SocketClientActivity extends Activity {
 			@Override
 			public boolean onGesture(Gesture gesture) {
 			if (gesture == Gesture.TAP) {
-				indx = 0;
-				new ControlTask().execute(START);
-				return true;
+				if(mTvInfo.getText().toString().contains("Timeout reached")){
+					myHandler.sendEmptyMessage(START_SERVER_DISCOVERY);
+				} else {
+					indx = 0;
+					new ControlTask().execute(START);
+					if(!chronometer.isActivated())
+						chronometer.start();
+					return true;
+				}
 			} else  if (gesture == Gesture.SWIPE_RIGHT) {
 				if (indx < notes.length - 1) indx++;
 				else new ControlTask().execute(EXIT);
@@ -229,6 +246,27 @@ public class SocketClientActivity extends Activity {
 			if(result){
 				mTvInfo.setTypeface(typeface);
 				mTvInfo.setTextSize(textSize);
+			}
+		}	
+	}
+	
+	private class ChronometerTask extends AsyncTask<Boolean, Void, Boolean> {
+
+		@Override
+		protected Boolean doInBackground(Boolean... control) {
+			return control[0];
+		}
+		
+		@Override
+		protected void onPostExecute(Boolean result) {
+			super.onPostExecute(result);
+			if(result){
+				chronometer.setVisibility(View.VISIBLE);
+				chronometer.setBase(SystemClock.elapsedRealtime() + (5*1000));
+				chronometer.start();
+			} else {
+				chronometer.stop();
+				chronometer.setVisibility(View.INVISIBLE);
 			}
 		}	
 	}

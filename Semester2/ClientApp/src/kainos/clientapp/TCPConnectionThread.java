@@ -1,7 +1,6 @@
 package kainos.clientapp;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -22,6 +21,7 @@ public class TCPConnectionThread implements Runnable {
 	private ObjectInputStream inStream;
 	private ObjectOutputStream outStream;
 	DataInputStream dataInputStream;
+
 
 	@Override
 	public void run() {
