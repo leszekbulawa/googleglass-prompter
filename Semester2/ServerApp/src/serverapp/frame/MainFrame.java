@@ -10,12 +10,12 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -29,8 +29,6 @@ import org.apache.log4j.Logger;
 
 import serverapp.server.DiscoveryThread;
 import serverapp.server.LocalHost;
-
-import javax.swing.JCheckBox;
 
 public class MainFrame extends JFrame implements ActionListener {
 
@@ -408,6 +406,20 @@ public class MainFrame extends JFrame implements ActionListener {
 		boolean font[] = {arial16RadioBtn.isSelected(), arial18RadioBtn.isSelected(), calibri18RadioBtn.isSelected()};
 		return font;
 	}
+	
+	public void clickButton(String name){
+		if(arial16RadioBtn.getText().equalsIgnoreCase(name)){
+			arial16RadioBtn.doClick();
+		} else if (arial18RadioBtn.getText().equalsIgnoreCase(name)) {
+			arial18RadioBtn.doClick();
+		} else if (calibri18RadioBtn.getText().equalsIgnoreCase(name)) {
+			calibri18RadioBtn.doClick();
+		} else if (timerEnabled.getText().equalsIgnoreCase(name)) {
+			timerEnabled.doClick();
+		} else if (btnResetTimer.getText().equalsIgnoreCase(name)) {
+			btnResetTimer.doClick();
+		}
+	}
 
 	private void setIpAndHostName() {
 		LocalHost localHost = LocalHost.getInstance();
@@ -420,9 +432,15 @@ public class MainFrame extends JFrame implements ActionListener {
 	public void changeLabel(String str) {
 		lblCurrentStatus.setText(str);	
 		if(str.equalsIgnoreCase("Connected"))
-			btnOpenPresentation.setEnabled(true);
-			
-			
+			btnOpenPresentation.setEnabled(true);				
+	}
+	
+	public boolean isTimerEnabled(){
+		if(timerEnabled.isSelected()){
+			return true;
+		} else {
+			return false;
+		}
 	}
 }
 

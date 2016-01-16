@@ -122,7 +122,7 @@ public class DiscoveryThread implements Runnable {
 									} catch (IOException e) {
 										// TODO Auto-generated catch block
 										connected = false;
-										log.error(e.getMessage());
+										log.error("Connection lost, restart server");
 									}				
 								}
 								if(!connected){
@@ -175,7 +175,6 @@ public class DiscoveryThread implements Runnable {
 	
 	public void sendChrono(Boolean font){
 		String message = "Chronometer is " + (font ? "enabled" : "disabled");
-		log.info(message);
 		if(isConnected()){
 			try {			
 				log.info(message);
