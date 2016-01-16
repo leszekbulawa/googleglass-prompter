@@ -75,7 +75,7 @@ public class SocketClientActivity extends Activity {
 	        	new Thread(discoveryThread).start();
 	        	break;
 	        case UDP_TIMEOUT:
-	        	mTvInfo.setText("Timeout reached, TAP again to reconnect.");
+	        	mTvInfo.setText("Timeout reached, check server and TAP again to reconnect.");
 	        	break;
 	        case SERVER_IP_RECEIVED:
 	        	serverIP = discoveryThread.getServerIP();
@@ -162,6 +162,10 @@ public class SocketClientActivity extends Activity {
 				indx = 0;
 				new ControlTask().execute(EXIT);
 				return true;
+			} else if (gesture == Gesture.SWIPE_DOWN){
+				isListening = false;
+				tcpConnection.closeSocket();
+				finish();
 			}
 			return false;
 		}
