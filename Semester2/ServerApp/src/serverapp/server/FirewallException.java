@@ -1,8 +1,6 @@
 package serverapp.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 import org.apache.log4j.Logger;
 
@@ -22,14 +20,6 @@ public class FirewallException {
 		try {
 			Process p = Runtime.getRuntime().exec(ADD_UDP_COMMAND);
 			p.waitFor();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					p.getInputStream()));
-			String line = reader.readLine();
-			while (line != null) {
-				log.info(line);
-			}
-			
-
 		} catch (IOException e1) {
 			log.error(e1.getMessage());
 			
@@ -42,14 +32,6 @@ public class FirewallException {
 		try {
 			Process p = Runtime.getRuntime().exec(ADD_TCP_COMMAND);
 			p.waitFor();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					p.getInputStream()));
-			String line = reader.readLine();
-			while (line != null) {
-				log.info(line);
-			}
-			
-
 		} catch (IOException e1) {
 			log.error(e1.getMessage());
 			
@@ -62,12 +44,6 @@ public class FirewallException {
 		try {
 			Process p = Runtime.getRuntime().exec(REMOVE_UDP_COMMAND);
 			p.waitFor();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					p.getInputStream()));
-			String line = reader.readLine();
-			while (line != null) {
-				log.info(line);
-			}
 
 		} catch (IOException e1) {
 			log.error(e1.getMessage());
@@ -81,12 +57,6 @@ public class FirewallException {
 		try {
 			Process p = Runtime.getRuntime().exec(REMOVE_TCP_COMMAND);
 			p.waitFor();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					p.getInputStream()));
-			String line = reader.readLine();
-			while (line != null) {
-				log.info(line);
-			}
 
 		} catch (IOException e1) {
 			log.error(e1.getMessage());
