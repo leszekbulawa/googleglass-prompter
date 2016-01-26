@@ -37,6 +37,8 @@ public class DiscoveryThread implements Runnable {
 	ServerSocket serverSocket;
 	int port = 8888;
 	
+	FirewallException firewall;
+	
 	InputStream socketIn;
 	OutputStream socketOut;
 	

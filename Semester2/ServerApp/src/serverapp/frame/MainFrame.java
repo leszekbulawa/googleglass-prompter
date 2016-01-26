@@ -28,6 +28,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.log4j.Logger;
 
 import serverapp.server.DiscoveryThread;
+import serverapp.server.FirewallException;
 import serverapp.server.LocalHost;
 
 public class MainFrame extends JFrame implements ActionListener {
@@ -85,8 +86,11 @@ public class MainFrame extends JFrame implements ActionListener {
 	DiscoveryThread discThread;
 	private String[] notes;
 	private JPanel timerPanel;
+	private FirewallException fException;
 	
 	public MainFrame() {
+		fException = new FirewallException();
+		
 		discThread = DiscoveryThread.getInstance();
 		discThread.getFrame(this);	
 		initFrame();
@@ -310,6 +314,8 @@ public class MainFrame extends JFrame implements ActionListener {
 	}
 
 	private void startServer() {
+		fException.addUDPException();
+		fException.addTCPException();
 		lblCurrentStatus.setText(STATUS_RUNNING);
 		Thread thread = new Thread(discThread);
 		thread.start();
@@ -320,7 +326,8 @@ public class MainFrame extends JFrame implements ActionListener {
 	public void stopServer() {
 		lblCurrentStatus.setText(STATUS_STOPPED);
 		discThread.stopListening();
-		
+		fException.removeUDPException();
+		fException.removeTCPException();
 		btnOpenPresentation.setEnabled(false);
 		btnResetTimer.setEnabled(false);
 		btnStopServer.setEnabled(false);
@@ -334,6 +341,8 @@ public class MainFrame extends JFrame implements ActionListener {
 	
 	private void exitServer(){
 		discThread.stopListening();
+		fException.removeUDPException();
+		fException.removeTCPException();
 		this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	}
 	
